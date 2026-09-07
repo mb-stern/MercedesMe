@@ -197,12 +197,31 @@ class SmartcarConfigurator extends IPSModuleStrict
 
     private function FindVehicleInstanceByVehicleId(string $vehicleId): int
     {
+        $configuratorInstance = @IPS_GetInstance($this->InstanceID);
+        if (!is_array($configuratorInstance)) {
+            return 0;
+        }
+
+        $parentId = (int)($configuratorInstance['ConnectionID'] ?? 0);
+        if ($parentId <= 0) {
+            return 0;
+        }
+
         $instanceIds = @IPS_GetInstanceListByModuleID(self::VEHICLE_MODULE_ID);
         if (!is_array($instanceIds)) {
             return 0;
         }
 
         foreach ($instanceIds as $instanceId) {
+            $vehicleInstance = @IPS_GetInstance($instanceId);
+            if (!is_array($vehicleInstance)) {
+                continue;
+            }
+
+            if ((int)($vehicleInstance['ConnectionID'] ?? 0) !== $parentId) {
+                continue;
+            }
+
             if ((string)@IPS_GetProperty($instanceId, 'VehicleID') === $vehicleId) {
                 return (int)$instanceId;
             }
